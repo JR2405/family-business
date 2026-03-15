@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Caja — Mi Negocio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Caja</h1>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab('loteria')">Lotería</div>
+    <div class="tab" onclick="setTab('maquina')">Máquina</div>
+    <div class="tab" onclick="setTab('clientes')">Clientes</div>
+  </div>
+
+  <div id="content" class="item-list">
+    <div class="empty">Cargando...</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <a href="/dashboard">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inicio
+  </a>
+  <a href="/loteria">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+    Lotería
+  </a>
+  <a href="/maquina">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    Máquina
+  </a>
+  <a href="/clientes">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+    Clientes
+  </a>
+  <a href="/caja" class="active">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+    Caja
+  </a>
+</nav>
+
+<script src="/js/app.js"></script>
+<script>
+  checkAuth();
+  let cajaData = null;
+  let activeTab = 'loteria';
+
+  async function loadCaja() {
+
+  const data = await api('GET','/api/caja');
+
+  cajaData = {
+    loteria: [],
+    maquina: [],
+    movimientos: []
+  };
+
+  if(!Array.isArray(data)) return;
+
+  data.forEach(r => {
+
+    const tipo = (r.tipo || "").toLowerCase();
+
+    if(tipo.includes("loter")){
+
+      cajaData.loteria.push({
+        fecha: r.fecha,
+        monto: Number(r.entrada) || 0,
+        premios: Number(r.salida) || 0,
+        ganancia_usuario: Number(r.entrada) || 0,
+        saldo_dueno: 0
+      });
+
+    }
+
+    else if(tipo.includes("máq") || tipo.includes("maq")){
+
+      cajaData.maquina.push({
+        fecha: r.fecha,
+        monto: Number(r.entrada) || 0,
+        nota: r.descripcion || ""
+      });
+
+    }
+
+    else if(tipo.includes("cliente")){
+
+      cajaData.movimientos.push({
+        fecha: r.fecha,
+        monto: Number(r.entrada || r.salida) || 0,
+        cliente_nombre: r.descripcion || "Cliente",
+        sub_tipo: r.entrada > 0 ? "pago" : "deuda"
+      });
+
+    }
+
+  });
+
+    renderTab();
+
+  }
+  function setTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['loteria','maquina','clientes'][i] === tab);
+    });
+    renderTab();
+  }
+
+  function renderTab() {
+    const content = document.getElementById('content');
+    if (!cajaData) return;
+
+    if (activeTab === 'loteria') {
+      const rows = cajaData.loteria || [];
+      if (!rows.length) { content.innerHTML = '<div class="empty">Sin registros.</div>'; return; }
+      const totalVentas = rows.reduce((s, r) => s + r.monto, 0);
+      const totalGanancia = rows.reduce((s, r) => s + r.ganancia_usuario, 0);
+      const totalDueno = rows.reduce((s, r) => s + r.saldo_dueno, 0);
+      const totalPremios = rows.reduce((s, r) => s + r.premios, 0);
+
+      content.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div class="stat-card"><span class="label">Total Ventas</span><span class="value">${fmt(totalVentas)}</span></div>
+          <div class="stat-card"><span class="label">Total Premios</span><span class="value red">${fmt(totalPremios)}</span></div>
+          <div class="stat-card"><span class="label">Mis Ganancias</span><span class="value green">${fmt(totalGanancia)}</span></div>
+          <div class="stat-card"><span class="label">Dueño Total</span><span class="value ${totalDueno < 0 ? 'red' : ''}">${fmt(totalDueno)}</span></div>
+        </div>
+        <p class="section-title">Registros</p>
+        ${rows.map(r => `
+          <div class="item">
+            <div class="item-info">
+              <div class="item-title">${r.fecha}</div>
+              <div class="item-sub">
+                Ventas: ${fmt(r.monto)} · Premios: ${fmt(r.premios)}
+              </div>
+              <div class="item-sub" style="margin-top:3px">
+                <span class="badge badge-yellow">Yo: ${fmt(r.ganancia_usuario)}</span>
+                &nbsp;<span class="badge ${r.saldo_dueno < 0 ? 'badge-red' : 'badge-green'}">D: ${fmt(r.saldo_dueno)}</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    else if (activeTab === 'maquina') {
+      const rows = cajaData.maquina || [];
+      if (!rows.length) { content.innerHTML = '<div class="empty">Sin registros.</div>'; return; }
+      const total = rows.reduce((s, r) => s + r.monto, 0);
+      content.innerHTML = `
+        <div class="stat-card" style="margin-bottom:14px">
+          <span class="label">Total Máquina</span>
+          <span class="value">${fmt(total)}</span>
+        </div>
+        <p class="section-title">Registros</p>
+        ${rows.map(r => `
+          <div class="item">
+            <div class="item-info">
+              <div class="item-title">${r.fecha}</div>
+              ${r.nota ? `<div class="item-sub">${r.nota}</div>` : ''}
+            </div>
+            <span class="item-value">${fmt(r.monto)}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    else if (activeTab === 'clientes') {
+      const rows = cajaData.movimientos || [];
+      if (!rows.length) { content.innerHTML = '<div class="empty">Sin movimientos.</div>'; return; }
+      const totalDeuda = rows.filter(r => r.sub_tipo === 'deuda').reduce((s, r) => s + r.monto, 0);
+      const totalPagos = rows.filter(r => r.sub_tipo === 'pago').reduce((s, r) => s + r.monto, 0);
+      content.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div class="stat-card"><span class="label">Total Deudas</span><span class="value red">${fmt(totalDeuda)}</span></div>
+          <div class="stat-card"><span class="label">Total Pagos</span><span class="value green">${fmt(totalPagos)}</span></div>
+        </div>
+        <p class="section-title">Movimientos</p>
+        ${rows.map(r => `
+          <div class="item">
+            <div class="item-info">
+              <div class="item-title">${r.cliente_nombre}</div>
+              <div class="item-sub">${r.fecha} &nbsp;·&nbsp;
+                <span class="badge ${r.sub_tipo === 'deuda' ? 'badge-red' : 'badge-green'}">
+                  ${r.sub_tipo === 'deuda' ? 'Deuda' : 'Pago'}
+                </span>
+              </div>
+            </div>
+            <span class="item-value ${r.sub_tipo === 'deuda' ? 'red' : 'green'}">${fmt(r.monto)}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+  }
+
+  loadCaja();
+</script>
+</body>
+</html>

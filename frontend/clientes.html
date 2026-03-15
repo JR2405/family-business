@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Clientes — Mi Negocio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- LIST VIEW -->
+<div id="listView" class="page">
+  <div class="page-header">
+    <h1>Clientes</h1>
+    <button class="btn btn-primary" style="width:auto;padding:10px 16px" onclick="openModal('addClientModal')">+ Nuevo</button>
+  </div>
+  <div id="clientList" class="item-list">
+    <div class="empty">Cargando...</div>
+  </div>
+</div>
+
+<!-- DETAIL VIEW -->
+<div id="detailView" class="page" style="display:none">
+  <div class="page-header">
+    <button class="btn btn-ghost" style="width:auto" onclick="backToList()">← Volver</button>
+    <button class="btn btn-ghost" style="width:auto" onclick="openRenameModal()">✏️</button>
+  </div>
+  <div class="client-header">
+    <div class="client-avatar" id="clientAvatar">?</div>
+    <div>
+      <h2 id="clientName" style="font-size:20px;font-weight:800"></h2>
+      <div style="font-size:13px;color:var(--text2)">Saldo actual</div>
+      <div id="clientSaldo" style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--danger)"></div>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-bottom:16px">
+    <button class="btn btn-danger" onclick="openModal('addDebtModal')">+ Deuda</button>
+    <button class="btn btn-success" onclick="openModal('addPayModal')">+ Pago</button>
+  </div>
+
+  <p class="section-title">Movimientos</p>
+  <div id="movList" class="item-list"></div>
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="addClientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nuevo Cliente</h2>
+      <button class="modal-close" onclick="closeModal('addClientModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" id="newClientName" placeholder="Nombre del cliente">
+    </div>
+    <button class="btn btn-primary" onclick="saveNewClient()">Crear</button>
+  </div>
+</div>
+
+<!-- RENAME MODAL -->
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Renombrar</h2>
+      <button class="modal-close" onclick="closeModal('renameModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" id="renameInput" placeholder="Nuevo nombre">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveRename()">Guardar</button>
+      <button class="btn btn-danger" onclick="deleteClient()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DEBT MODAL -->
+<div class="modal-overlay" id="addDebtModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Agregar Deuda</h2>
+      <button class="modal-close" onclick="closeModal('addDebtModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Monto ($)</label>
+      <input type="number" id="debtMonto" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="debtFecha">
+    </div>
+    <button class="btn btn-danger" onclick="saveMov('deuda')">Registrar Deuda</button>
+  </div>
+</div>
+
+<!-- ADD PAYMENT MODAL -->
+<div class="modal-overlay" id="addPayModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Registrar Pago</h2>
+      <button class="modal-close" onclick="closeModal('addPayModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Monto ($)</label>
+      <input type="number" id="payMonto" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="payFecha">
+    </div>
+    <button class="btn btn-success" onclick="saveMov('pago')">Registrar Pago</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <a href="/dashboard">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inicio
+  </a>
+  <a href="/loteria">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+    Lotería
+  </a>
+  <a href="/maquina">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    Máquina
+  </a>
+  <a href="/clientes" class="active">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+    Clientes
+  </a>
+  <a href="/caja">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+    Caja
+  </a>
+</nav>
+
+<script src="/js/app.js"></script>
+<script>
+  checkAuth();
+  document.getElementById('debtFecha').value = today();
+  document.getElementById('payFecha').value = today();
+
+  let currentClientId = null;
+  let currentClientName = '';
+  let allClients = [];
+
+  async function loadClients() {
+    allClients = await api('GET', '/api/clientes') || [];
+    const list = document.getElementById('clientList');
+    if (!allClients.length) {
+      list.innerHTML = '<div class="empty">Sin clientes aún.</div>';
+      return;
+    }
+    list.innerHTML = allClients.map(c => `
+      <div class="item" onclick="openClient(${c.id}, '${escapeStr(c.nombre)}')">
+        <div class="item-info">
+          <div class="item-title">${c.nombre}</div>
+          <div class="item-sub">Saldo: <span style="color:${c.saldo > 0 ? 'var(--danger)' : 'var(--accent2)'}">${fmt(c.saldo)}</span></div>
+        </div>
+        <div>
+          <svg style="width:18px;height:18px;color:var(--text2)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeStr(s) { return s.replace(/'/g, "\\'"); }
+
+  function openClient(id, nombre) {
+    currentClientId = id;
+    currentClientName = nombre;
+    document.getElementById('clientName').textContent = nombre;
+    document.getElementById('clientAvatar').textContent = nombre.charAt(0).toUpperCase();
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('detailView').style.display = 'block';
+    loadMovimientos();
+    refreshSaldo();
+  }
+
+  function backToList() {
+    currentClientId = null;
+    document.getElementById('detailView').style.display = 'none';
+    document.getElementById('listView').style.display = 'block';
+    loadClients();
+  }
+
+  async function refreshSaldo() {
+    const clients = await api('GET', '/api/clientes');
+    const c = clients.find(x => x.id === currentClientId);
+    if (!c) return;
+    const sEl = document.getElementById('clientSaldo');
+    sEl.textContent = fmt(c.saldo);
+    sEl.style.color = c.saldo > 0 ? 'var(--danger)' : 'var(--accent2)';
+  }
+
+  async function loadMovimientos() {
+    const data = await api('GET', '/api/clientes/' + currentClientId + '/movimientos') || [];
+    const list = document.getElementById('movList');
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">Sin movimientos.</div>';
+      return;
+    }
+    list.innerHTML = data.map(m => `
+      <div class="item">
+        <div class="item-info">
+          <div class="item-title">${m.fecha}</div>
+          <div class="item-sub">
+            <span class="badge ${m.tipo === 'deuda' ? 'badge-red' : 'badge-green'}">
+              ${m.tipo === 'deuda' ? 'Deuda' : 'Pago'}
+            </span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="item-value ${m.tipo === 'deuda' ? 'red' : 'green'}">
+            ${m.tipo === 'deuda' ? '+' : '-'}${fmt(m.monto)}
+          </span>
+          <button class="icon-btn red" onclick="deleteMov(${m.id}, event)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function saveMov(tipo) {
+    const montoId = tipo === 'deuda' ? 'debtMonto' : 'payMonto';
+    const fechaId = tipo === 'deuda' ? 'debtFecha' : 'payFecha';
+    const monto = document.getElementById(montoId).value;
+    const fecha = document.getElementById(fechaId).value;
+    if (!monto || !fecha) return showToast('Completa todos los campos', 'error');
+    await api('POST', '/api/clientes/' + currentClientId + '/movimientos', { tipo, monto, fecha });
+    closeModal(tipo === 'deuda' ? 'addDebtModal' : 'addPayModal');
+    document.getElementById(montoId).value = '';
+    showToast(tipo === 'deuda' ? 'Deuda registrada' : 'Pago registrado');
+    loadMovimientos();
+    refreshSaldo();
+  }
+
+  async function deleteMov(id, e) {
+    e.stopPropagation();
+    if (!confirm('¿Eliminar este movimiento?')) return;
+    await api('DELETE', '/api/movimientos_clientes/' + id);
+    showToast('Eliminado');
+    loadMovimientos();
+    refreshSaldo();
+  }
+
+  function openRenameModal() {
+    document.getElementById('renameInput').value = currentClientName;
+    openModal('renameModal');
+  }
+
+  async function saveRename() {
+    const nombre = document.getElementById('renameInput').value.trim();
+    if (!nombre) return;
+    await api('PUT', '/api/clientes/' + currentClientId, { nombre });
+    currentClientName = nombre;
+    document.getElementById('clientName').textContent = nombre;
+    document.getElementById('clientAvatar').textContent = nombre.charAt(0).toUpperCase();
+    closeModal('renameModal');
+    showToast('Nombre actualizado');
+  }
+
+  async function deleteClient() {
+    if (!confirm('¿Eliminar este cliente y todos sus movimientos?')) return;
+    await api('DELETE', '/api/clientes/' + currentClientId);
+    closeModal('renameModal');
+    backToList();
+    showToast('Cliente eliminado');
+  }
+
+  async function saveNewClient() {
+    const nombre = document.getElementById('newClientName').value.trim();
+    if (!nombre) return showToast('Ingresa un nombre', 'error');
+    await api('POST', '/api/clientes', { nombre });
+    document.getElementById('newClientName').value = '';
+    closeModal('addClientModal');
+    showToast('Cliente creado');
+    loadClients();
+  }
+
+  loadClients();
+</script>
+</body>
+</html>

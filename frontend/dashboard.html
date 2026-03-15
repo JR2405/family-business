@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Inicio — Mi Negocio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Resumen</h1>
+    <button class="btn btn-ghost" style="width:auto" onclick="logout()">Salir</button>
+  </div>
+
+  <div id="dateLabel" class="text-muted" style="font-size:13px;margin-bottom:16px"></div>
+
+  <p class="section-title">Hoy</p>
+
+  <div class="card-grid">
+
+  <div class="stat-card">
+      <span class="label">Mi Ganancia</span>
+      <span class="value green" id="ganancia_hoy">—</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="label">Dueño (hoy)</span>
+      <span class="value" id="saldo_dueno_hoy">—</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="label">Ganancia Total Hoy</span>
+      <span class="value green" id="hoy_total">—</span>
+    </div>
+
+  </div>
+
+  <p class="section-title">Esta semana</p>
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="label">Ganancia semana</span>
+      <span class="value green" id="ganancia_semana">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">Balance Dueño</span>
+      <span class="value" id="saldo_dueno_total">—</span>
+    </div>
+  </div>
+
+  <p class="section-title">Este mes</p>
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="label">Ganancia mes</span>
+      <span class="value green" id="mes">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">Ganancia Total</span>
+      <span class="value green" id="mes_total">—</span>
+    </div>
+  </div>
+
+  
+
+  <p class="section-title">Otros</p>
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="label">Máquina Total</span>
+      <span class="value" id="maquina_total">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">Deudas Clientes</span>
+      <span class="value red" id="deuda_clientes">—</span>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="card" style="text-align:center">
+    <p class="text-muted" style="font-size:13px;margin-bottom:14px">Acceso rápido</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <a href="/loteria" class="btn btn-primary" style="text-decoration:none">📋 Lotería</a>
+      <a href="/maquina" class="btn btn-ghost" style="text-decoration:none">🎰 Máquina</a>
+      <a href="/clientes" class="btn btn-ghost" style="text-decoration:none">👥 Clientes</a>
+      <a href="/caja" class="btn btn-ghost" style="text-decoration:none">💰 Caja</a>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <a href="/dashboard" class="active">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inicio
+  </a>
+  <a href="/loteria">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+    Lotería
+  </a>
+  <a href="/maquina">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    Máquina
+  </a>
+  <a href="/clientes">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+    Clientes
+  </a>
+  <a href="/caja">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+    Caja
+  </a>
+</nav>
+
+<script src="/js/app.js"></script>
+<script>
+  checkAuth();
+
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('es-DO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  async function loadDashboard() {
+    const d = await api('GET', '/api/dashboard');
+    if (!d) return;
+
+    set('ganancia_hoy', d.ganancia_hoy, 'green');
+    set('saldo_dueno_hoy', d.saldo_dueno_hoy, d.saldo_dueno_hoy < 0 ? 'red' : '');
+    set('ganancia_semana', d.ganancia_semana, 'green');
+    set('saldo_dueno_total', d.saldo_dueno_total, d.saldo_dueno_total < 0 ? 'red' : '');
+    set('maquina_total', d.maquina_total, '');
+    set('deuda_clientes', d.deuda_clientes, 'red');
+  }
+
+  function set(id, val, cls) {
+    const el = document.getElementById(id);
+    el.textContent = fmt(val);
+    el.className = 'value' + (cls ? ' ' + cls : '');
+  }
+
+  async function logout() {
+    await api('POST', '/api/logout');
+    window.location.href = '/';
+  }
+
+  
+  async function cargarStats(){
+
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+
+    if (!data) return;
+
+    // hoy
+    const hoyLoteria = data.hoy_loteria || 0;
+    const hoyMaquina = data.hoy_maquina || 0;
+
+    const hoyTotal = hoyLoteria + hoyMaquina;
+
+    // mes
+    const mesLoteria = data.mes_loteria || 0;
+    const mesMaquina = data.mes_maquina || 0;
+
+    const mesTotal = mesLoteria + mesMaquina;
+
+    // actualizar DOM
+
+    const elHoyTotal = document.getElementById("hoy_total");
+    if (elHoyTotal) elHoyTotal.textContent = fmt(hoyTotal);
+
+    const elMes = document.getElementById("mes");
+    if (elMes) elMes.textContent = fmt(mesLoteria);
+
+    const elMesTotal = document.getElementById("mes_total");
+    if (elMesTotal) elMesTotal.textContent = fmt(mesTotal);
+
+  }
+  
+async function cargarCaja(){
+
+  const res = await fetch('/api/caja-resumen', {
+    credentials: "include"
+  });
+
+  const data = await res.json();
+
+  if(!data) return;
+
+  const elL = document.getElementById("caja_loteria");
+  if(elL) elL.textContent = fmt(data.loteria);
+
+  const elM = document.getElementById("caja_maquina");
+  if(elM) elM.textContent = fmt(data.maquina);
+
+  const elP = document.getElementById("caja_pagos");
+  if(elP) elP.textContent = fmt(data.pagos);
+
+  const elPr = document.getElementById("caja_premios");
+  if(elPr) elPr.textContent = fmt(data.premios);
+
+  const elT = document.getElementById("caja_total");
+  if(elT) elT.textContent = fmt(data.total);
+
+}
+
+  loadDashboard();
+  cargarStats();
+  cargarCaja();
+
+</script>
+</body>
+</html>

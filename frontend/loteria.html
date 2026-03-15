@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lotería — Mi Negocio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Lotería</h1>
+    <button class="btn btn-primary" style="width:auto;padding:10px 16px" onclick="openModal('addModal')">+ Registrar</button>
+  </div>
+
+  <div id="list" class="item-list">
+    <div class="empty">Cargando...</div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nueva Entrada</h2>
+      <button class="modal-close" onclick="closeModal('addModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="add_fecha">
+    </div>
+    <div class="form-group">
+      <label>Ventas ($)</label>
+      <input type="number" id="add_ventas" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Premios pagados ($)</label>
+      <input type="number" id="add_premios" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="sep"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div>
+        <label>Mi ganancia (15%)</label>
+        <div class="calc-field accent" id="add_ganancia">$0.00</div>
+      </div>
+      <div>
+        <label>Saldo dueño</label>
+        <div class="calc-field positive" id="add_saldo">$0.00</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveNew()">Guardar</button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Editar Entrada</h2>
+      <button class="modal-close" onclick="closeModal('editModal')">×</button>
+    </div>
+    <input type="hidden" id="edit_id">
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="edit_fecha">
+    </div>
+    <div class="form-group">
+      <label>Ventas ($)</label>
+      <input type="number" id="edit_ventas" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Premios pagados ($)</label>
+      <input type="number" id="edit_premios" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="sep"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div>
+        <label>Mi ganancia (15%)</label>
+        <div class="calc-field accent" id="edit_ganancia">$0.00</div>
+      </div>
+      <div>
+        <label>Saldo dueño</label>
+        <div class="calc-field positive" id="edit_saldo">$0.00</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEdit()">Guardar</button>
+      <button class="btn btn-danger" onclick="deleteEntry()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <a href="/dashboard">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inicio
+  </a>
+  <a href="/loteria" class="active">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+    Lotería
+  </a>
+  <a href="/maquina">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    Máquina
+  </a>
+  <a href="/clientes">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+    Clientes
+  </a>
+  <a href="/caja">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+    Caja
+  </a>
+</nav>
+
+<script src="/js/app.js"></script>
+<script>
+  checkAuth();
+  document.getElementById('add_fecha').value = today();
+
+  function calcFields(prefix) {
+    const v = parseFloat(document.getElementById(prefix + '_ventas').value) || 0;
+    const p = parseFloat(document.getElementById(prefix + '_premios').value) || 0;
+    const g = v * 0.15;
+    const s = v - g - p;
+    const gEl = document.getElementById(prefix + '_ganancia');
+    const sEl = document.getElementById(prefix + '_saldo');
+    gEl.textContent = fmt(g);
+    sEl.textContent = fmt(s);
+    sEl.className = 'calc-field ' + (s < 0 ? 'negative' : 'positive');
+  }
+
+  ['add_ventas','add_premios'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => calcFields('add'));
+  });
+  ['edit_ventas','edit_premios'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => calcFields('edit'));
+  });
+
+  async function loadList() {
+    const data = await api('GET', '/api/loteria');
+    const list = document.getElementById('list');
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="empty">Sin registros aún.<br>Presiona "+ Registrar" para comenzar.</div>';
+      return;
+    }
+    list.innerHTML = data.map(r => `
+      <div class="item" onclick="openEdit(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+        <div class="item-info">
+          <div class="item-title">${r.fecha}</div>
+          <div class="item-sub">
+            Ventas: ${fmt(r.ventas)} &nbsp;·&nbsp; Premios: ${fmt(r.premios)}
+          </div>
+          <div class="item-sub" style="margin-top:4px">
+            <span class="badge badge-yellow">Yo: ${fmt(r.ganancia_usuario)}</span>
+            &nbsp;
+            <span class="badge ${r.saldo_dueno < 0 ? 'badge-red' : 'badge-green'}">Dueño: ${fmt(r.saldo_dueno)}</span>
+          </div>
+        </div>
+        <div>
+          <svg style="width:18px;height:18px;color:var(--text2)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function saveNew() {
+    const fecha = document.getElementById('add_fecha').value;
+    const ventas = document.getElementById('add_ventas').value;
+    const premios = document.getElementById('add_premios').value;
+    if (!fecha || !ventas) return showToast('Completa fecha y ventas', 'error');
+    await api('POST', '/api/loteria', { fecha, ventas, premios: premios || 0 });
+    closeModal('addModal');
+    document.getElementById('add_ventas').value = '';
+    document.getElementById('add_premios').value = '';
+    calcFields('add');
+    showToast('Registro guardado');
+    loadList();
+  }
+
+  function openEdit(r) {
+    document.getElementById('edit_id').value = r.id;
+    document.getElementById('edit_fecha').value = r.fecha;
+    document.getElementById('edit_ventas').value = r.ventas;
+    document.getElementById('edit_premios').value = r.premios;
+    calcFields('edit');
+    openModal('editModal');
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('edit_id').value;
+    const fecha = document.getElementById('edit_fecha').value;
+    const ventas = document.getElementById('edit_ventas').value;
+    const premios = document.getElementById('edit_premios').value;
+    await api('PUT', '/api/loteria/' + id, { fecha, ventas, premios: premios || 0 });
+    closeModal('editModal');
+    showToast('Actualizado');
+    loadList();
+  }
+
+  async function deleteEntry() {
+    if (!confirm('¿Eliminar este registro?')) return;
+    const id = document.getElementById('edit_id').value;
+    await api('DELETE', '/api/loteria/' + id);
+    closeModal('editModal');
+    showToast('Eliminado');
+    loadList();
+  }
+
+  loadList();
+</script>
+</body>
+</html>
