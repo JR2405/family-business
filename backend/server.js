@@ -35,15 +35,11 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false, httpOnly: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 } // 24h
 }));
-const path = require('path');
 
 const frontendPath = path.join(__dirname, '../frontend');
 
 app.use(express.static(frontendPath));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
 
 // ─── AUTH ROUTES ──────────────────────────────────────────────
 app.post('/api/login', loginLimiter, (req, res) => {
