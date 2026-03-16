@@ -36,7 +36,7 @@ app.use(session({
   cookie: { secure: false, httpOnly: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 } // 24h
 }));
 
-const frontendPath = path.join(__dirname, '../frontend');
+const frontendPath = path.join(__dirname, 'frontend');
 
 app.use(express.static(frontendPath));
 
@@ -441,8 +441,8 @@ app.get('/api/backup', requireAuth, (req, res) => {
     .toISOString()
     .replace(/[:.]/g, "-");
 
-  const src = path.join(__dirname, '../database/database.sqlite');
-  const dest = path.join(__dirname, `../database/manual-backup-${timestamp}.sqlite`);
+  const src = path.join(__dirname, 'database/database.sqlite');
+  const dest = path.join(__dirname, `database/manual-backup-${timestamp}.sqlite`);
 
   fs.copyFileSync(src, dest);
 
@@ -454,7 +454,7 @@ app.get('/api/backup', requireAuth, (req, res) => {
 const pages = ['dashboard', 'loteria', 'maquina', 'clientes', 'caja' ];
 pages.forEach(page => {
   app.get(`/${page}`, requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, `../frontend/${page}.html`));
+    res.sendFile(path.join(__dirname, `frontend/${page}.html`));
   });
 });
 
@@ -469,11 +469,11 @@ app.get('/', (req, res) => {
   if (req.session && req.session.userId) {
     res.redirect('/dashboard');
   } else {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    res.sendFile(path.join(__dirname, 'frontend/index.html'));
   }
 });
 
-const backupDir = path.join(__dirname, '../database');
+const backupDir = path.join(__dirname, 'database');
 
 if (!fs.existsSync(backupDir)) {
   fs.mkdirSync(backupDir, { recursive: true });
@@ -485,19 +485,19 @@ setInterval(() => {
     .toISOString()
     .replace(/[:.]/g, "-");
 
-  const src = path.join(__dirname, '../database/database.sqlite');
-  const dest = path.join(__dirname, `../database/backup-${timestamp}.sqlite`);
+  const src = path.join(__dirname, 'database/database.sqlite');
+  const dest = path.join(__dirname, `database/backup-${timestamp}.sqlite`);
 
   fs.copyFileSync(src, dest);
 
   // eliminar backups viejos
-  const files = fs.readdirSync(path.join(__dirname, '../database'))
+  const files = fs.readdirSync(path.join(__dirname, 'database'))
     .filter(f => f.startsWith("backup-"))
     .sort();
 
   if (files.length > 20) {
     const oldest = files[0];
-    fs.unlinkSync(path.join(__dirname, '../database', oldest));
+    fs.unlinkSync(path.join(__dirname, 'database', oldest));
   }
 
   console.log("Backup automático creado:", dest);
